@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form 1 Math Snakes & Ladders DLP Quest</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti for celebrations -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif']
+                    },
+                    colors: {
+                        board: {
+                            light: '#1e293b',
+                            dark: '#0f172a',
+                            accent: '#8b5cf6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #090d16 0%, #151b2e 50%, #210d36 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+        .title-font {
+            font-family: 'Fredoka', cursive;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .btn-bounce {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .btn-bounce:hover {
+            transform: translateY(-3px) scale(1.02);
+        }
+        .btn-bounce:active {
+            transform: translateY(2px) scale(0.98);
+        }
+        
+        /* Snakes & Ladders Board Grid */
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(10, minmax(0, 1fr));
+            grid-template-rows: repeat(10, minmax(0, 1fr));
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto;
+        }
+        .tile {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 800;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+        @media (min-width: 640px) {
+            .tile {
+                font-size: 0.8rem;
+            }
+        }
+        
+        /* Token Player Badges */
+        .token {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 10px;
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.9);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.6);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: absolute;
+            z-index: 20;
+        }
+        
+        .token-red { background: radial-gradient(circle, #ef4444, #991b1b); }
+        .token-blue { background: radial-gradient(circle, #3b82f6, #1e40af); }
+        .token-green { background: radial-gradient(circle, #10b981, #065f46); }
+        .token-yellow { background: radial-gradient(circle, #f59e0b, #92400e); }
+
+        /* Dice 3D shake animation */
+        @keyframes diceRoll {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(180deg) scale(1.2); }
+            50% { transform: rotate(360deg) scale(0.9); }
+            75% { transform: rotate(540deg) scale(1.15); }
+            100% { transform: rotate(720deg) scale(1); }
+        }
+        .animate-dice {
+            animation: diceRoll 0.6s ease-in-out;
+        }
+
+        .snake-line {
+            stroke: #ef4444;
+            stroke-width: 4;
+            stroke-linecap: round;
+            filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));
+        }
+        .ladder-line {
+            stroke: #10b981;
+            stroke-width: 5;
+            stroke-dasharray: 6, 3;
+            stroke-linecap: round;
+            filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between p-2 md:p-5">
+
+    <header class="max-w-6xl mx-auto w-full flex justify-between items-center mb-3 glass-card p-3 md:p-4 rounded-2xl">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-tr from-amber-400 via-emerald-500 to-indigo-600 rounded-xl flex items-center justify-center text-white text-xl md:text-2xl shadow-lg font-bold">
+                <i class="fa-solid fa-gamepad"></i>
+            </div>
+            <div>
+                <h1 class="title-font text-lg md:text-2xl font-bold bg-gradient-to-r from-amber-300 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                    SNAKES & LADDERS MATH QUEST
+                </h1>
+                <p class="text-[11px] md:text-xs text-slate-300">Form 1 KSSM DLP Classroom Board Game</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2 md:space-x-3">
+            <button id="soundToggleBtn" onclick="toggleSound()" class="p-2 md:p-2.5 bg-slate-800/80 hover:bg-slate-700 rounded-xl text-amber-400 transition-colors">
+                <i id="soundIcon" class="fa-solid fa-volume-high text-base md:text-lg"></i>
+            </button>
+            <button onclick="showInstructions()" class="p-2 md:p-2.5 bg-slate-800/80 hover:bg-slate-700 rounded-xl text-purple-400 transition-colors">
+                <i class="fa-solid fa-circle-question text-base md:text-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full flex-grow flex flex-col justify-center">
+
+        <!-- SCREEN 1: Setup & Lobby Screen -->
+        <div id="welcomeScreen" class="glass-card rounded-3xl p-6 md:p-10 text-center space-y-6 max-w-3xl mx-auto">
+            <div class="inline-block p-4 bg-purple-600/20 rounded-full border border-purple-500/30 mb-1">
+                <i class="fa-solid fa-dice-d6 text-5xl text-amber-300 animate-bounce"></i>
+            </div>
+            <h2 class="title-font text-2xl md:text-4xl font-extrabold text-white">
+                Classroom Snakes & Ladders
+            </h2>
+            <p class="text-slate-300 max-w-xl mx-auto text-xs md:text-sm">
+                Roll the dice, answer Form 1 Mathematics questions to climb ladders, dodge snakes, and race to tile 100!
+            </p>
+
+            <!-- Number of Players / Teams -->
+            <div class="space-y-3">
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Select Number of Teams / Players:</label>
+                <div class="flex justify-center gap-2 md:gap-4 max-w-md mx-auto">
+                    <button onclick="setPlayerCount(1)" id="btnCount1" class="player-cnt-btn flex-1 py-2.5 rounded-xl font-bold text-sm bg-slate-800 border-2 border-slate-700 text-slate-300">1 Player</button>
+                    <button onclick="setPlayerCount(2)" id="btnCount2" class="player-cnt-btn flex-1 py-2.5 rounded-xl font-bold text-sm bg-slate-800 border-2 border-slate-700 text-slate-300">2 Teams</button>
+                    <button onclick="setPlayerCount(3)" id="btnCount3" class="player-cnt-btn flex-1 py-2.5 rounded-xl font-bold text-sm bg-slate-800 border-2 border-slate-700 text-slate-300">3 Teams</button>
+                    <button onclick="setPlayerCount(4)" id="btnCount4" class="player-cnt-btn flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 border-2 border-purple-400 text-white shadow-lg">4 Teams</button>
+                </div>
+            </div>
+
+            <!-- Chapter Selection -->
+            <div class="space-y-3 pt-2">
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Select Math Syllabus Mode:</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto text-left">
+                    <button onclick="startGame('all')" class="p-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 font-bold text-white shadow-lg flex items-center justify-between border border-pink-400 btn-bounce">
+                        <span><i class="fa-solid fa-trophy text-amber-300 mr-2"></i> All Chapters (1 - 13)</span>
+                        <i class="fa-solid fa-circle-play"></i>
+                    </button>
+                    <button onclick="startGame('numbers')" class="p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold text-xs md:text-sm text-slate-200 btn-bounce">
+                        <span class="block text-amber-400 font-bold">Chapters 1–4</span> Numbers, Factors & Ratios
+                    </button>
+                    <button onclick="startGame('algebra')" class="p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold text-xs md:text-sm text-slate-200 btn-bounce">
+                        <span class="block text-amber-400 font-bold">Chapters 5–7</span> Algebra & Equations
+                    </button>
+                    <button onclick="startGame('geometry')" class="p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold text-xs md:text-sm text-slate-200 btn-bounce">
+                        <span class="block text-amber-400 font-bold">Chapters 8–13</span> Geometry & Pythagoras
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: Active Board Gameplay Screen -->
+        <div id="gameplayScreen" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            
+            <!-- Left Side: Interactive Board (8 cols on lg screen) -->
+            <div class="lg:col-span-7 glass-card p-3 md:p-4 rounded-3xl relative">
+                <!-- Board Canvas / Grid -->
+                <div id="boardGrid" class="board-grid rounded-2xl overflow-hidden border-2 border-slate-700/80 bg-slate-900/90 relative">
+                    <!-- SVG Overlays for Snakes and Ladders lines -->
+                    <svg id="boardSvg" class="absolute inset-0 w-full h-full pointer-events-none z-10"></svg>
+                    <!-- 100 tiles dynamically created in JS -->
+                </div>
+
+                <!-- Legend / Key -->
+                <div class="flex justify-around items-center mt-3 text-[11px] font-semibold text-slate-300 bg-slate-900/50 p-2 rounded-xl">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-grip-lines text-emerald-400 text-base"></i> Green Dashed = Ladder Climb</span>
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-wave-square text-rose-500 text-base"></i> Red Line = Snake Slide</span>
+                </div>
+            </div>
+
+            <!-- Right Side: Turn Control Panel & Dashboard (5 cols on lg screen) -->
+            <div class="lg:col-span-5 space-y-4">
+
+                <!-- Active Turn Banner -->
+                <div class="glass-card p-4 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Turn</p>
+                        <h3 id="currentTurnText" class="title-font text-xl md:text-2xl font-bold text-rose-400 flex items-center gap-2">
+                            <span id="turnColorDot" class="w-4 h-4 rounded-full bg-rose-500 inline-block shadow"></span>
+                            <span>Red Team</span>
+                        </h3>
+                    </div>
+                    <!-- Dice Control -->
+                    <div class="text-center">
+                        <button id="rollDiceBtn" onclick="rollDice()" class="py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-400 to-rose-500 hover:from-amber-300 hover:to-rose-400 text-slate-950 font-extrabold text-base shadow-xl btn-bounce flex items-center gap-2">
+                            <i id="diceIcon" class="fa-solid fa-dice-five text-2xl"></i>
+                            <span>ROLL DICE</span>
+                        </button>
+                        <p id="diceResultText" class="text-xs font-bold text-amber-300 mt-1 min-h-[16px]"></p>
+                    </div>
+                </div>
+
+                <!-- Leaderboard / Positions Table -->
+                <div class="glass-card p-4 rounded-2xl space-y-3">
+                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                        <span><i class="fa-solid fa-ranking-star mr-1.5 text-amber-400"></i> Team Standings</span>
+                        <span class="text-[10px] text-slate-400">Goal: Tile 100</span>
+                    </h4>
+                    <div id="leaderboardList" class="space-y-2">
+                        <!-- Dynamic team cards -->
+                    </div>
+                </div>
+
+                <!-- Last Action / Log Box -->
+                <div class="glass-card p-3 rounded-xl bg-slate-900/60 border border-slate-700 text-xs">
+                    <p class="font-bold text-purple-300 mb-1"><i class="fa-solid fa-bullhorn mr-1"></i> Match Log:</p>
+                    <p id="matchLogText" class="text-slate-300 italic text-[11px] leading-relaxed">
+                        Game started! Red Team rolls first.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: Results / Victory Screen -->
+        <div id="resultScreen" class="hidden glass-card rounded-3xl p-6 md:p-10 text-center space-y-6 max-w-xl mx-auto">
+            <div id="resultIconContainer" class="inline-block p-5 bg-amber-500/20 rounded-full border border-amber-400/30">
+                <i class="fa-solid fa-trophy text-6xl text-amber-300 animate-bounce"></i>
+            </div>
+
+            <h2 id="winnerTitle" class="title-font text-3xl md:text-5xl font-extrabold text-white">
+                Red Team Wins!
+            </h2>
+            <p id="winnerSubtitle" class="text-slate-300 text-sm max-w-md mx-auto">
+                Congratulations! You successfully reached Tile 100 and conquered the Form 1 Math Quest!
+            </p>
+
+            <div class="pt-4 flex flex-col sm:flex-row justify-center gap-3">
+                <button onclick="restartGame()" class="btn-bounce py-3.5 px-8 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white text-sm shadow-xl">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> Play Again
+                </button>
+                <button onclick="returnToMenu()" class="btn-bounce py-3.5 px-8 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-600 font-bold text-slate-200 text-sm">
+                    <i class="fa-solid fa-house mr-2"></i> Main Menu
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="mathModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3">
+        <div class="glass-card bg-slate-900/95 max-w-xl w-full p-6 rounded-3xl border border-purple-500/40 text-left space-y-4 shadow-2xl relative">
+            
+            <!-- Modal Header Badge -->
+            <div class="flex justify-between items-center">
+                <span id="modalTileBadge" class="px-3 py-1 bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold rounded-full">
+                    <i class="fa-solid fa-cube mr-1"></i> Tile #25 Challenge
+                </span>
+                <span id="modalCategoryBadge" class="px-3 py-1 bg-purple-600/40 border border-purple-400/30 text-purple-200 text-xs font-bold rounded-full">
+                    Chapter 1: Rational Numbers
+                </span>
+            </div>
+
+            <!-- Modal Challenge Context -->
+            <div id="modalContextBanner" class="p-3 rounded-xl bg-indigo-900/50 border border-indigo-500/30 text-indigo-200 text-xs font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-amber-300 text-base"></i>
+                <span id="modalContextText">Answer correctly to climb the ladder!</span>
+            </div>
+
+            <!-- Question Text -->
+            <div class="my-3 min-h-[60px] flex items-center">
+                <h3 id="modalQuestionText" class="text-base md:text-lg font-bold text-white leading-relaxed">
+                    Question text goes here...
+                </h3>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="modalOptionsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <!-- Dynamically populated buttons -->
+            </div>
+
+            <!-- Explanation Box (Shown after answering) -->
+            <div id="modalExplanationBox" class="hidden mt-4 p-4 rounded-2xl bg-slate-950/80 border border-slate-700 space-y-2">
+                <div class="flex items-center space-x-2 text-amber-400 font-bold text-xs">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <span>Solution Explanation:</span>
+                </div>
+                <p id="modalExplanationText" class="text-xs text-slate-300 leading-relaxed">
+                    Step by step explanation...
+                </p>
+                <div class="pt-2 text-right">
+                    <button onclick="closeMathModal()" class="py-2.5 px-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs font-bold rounded-xl shadow-lg btn-bounce">
+                        Continue Game <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="instructionsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="glass-card bg-slate-900/95 max-w-lg w-full p-6 rounded-3xl border border-slate-700 text-left space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="title-font text-xl font-bold text-amber-300 flex items-center">
+                    <i class="fa-solid fa-book-open mr-2"></i> Game Rules & Instructions
+                </h3>
+                <button onclick="hideInstructions()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="space-y-3 text-xs md:text-sm text-slate-300 leading-relaxed">
+                <p><strong class="text-purple-400">1. Board Setup:</strong> 100 tiles containing hidden ladders and snakes.</p>
+                <p><strong class="text-purple-400">2. Rolling the Dice:</strong> Teams take turns rolling the 6-sided dice to move forward.</p>
+                <p><strong class="text-purple-400">3. Math Challenges:</strong> Land on tiles to solve Form 1 KSSM DLP questions.
+                    <br>• <b>Ladder Tile:</b> Correct answer = Climb up! Wrong answer = Stay at bottom.
+                    <br>• <b>Snake Head:</b> Correct answer = Defend & dodge slide! Wrong answer = Slide down snake.
+                    <br>• <b>Standard Tile:</b> Correct answer = Keep position! Wrong answer = Step back 2 spaces.
+                </p>
+                <p><strong class="text-purple-400">4. Winning the Game:</strong> First team/player to reach Tile 100 wins the game!</p>
+            </div>
+            <button onclick="hideInstructions()" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl font-bold text-white text-xs uppercase tracking-wider">
+                Got It! Back to Game
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Web Audio API Synthesizer ---
+        let audioCtx = null;
+        let isSoundMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (isSoundMuted) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'correct') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'wrong') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now); // A3
+                osc.frequency.setValueAtTime(164.81, now + 0.15); // E3
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } else if (type === 'dice') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300 + Math.random() * 200, now);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'ladder') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(900, now + 0.4);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.45);
+            } else if (type === 'snake') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(150, now + 0.5);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.55);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.55);
+            }
+        }
+
+        function toggleSound() {
+            isSoundMuted = !isSoundMuted;
+            const icon = document.getElementById('soundIcon');
+            if (isSoundMuted) {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+            } else {
+                icon.className = 'fa-solid fa-volume-high text-amber-400';
+                playSound('dice');
+            }
+        }
+
+        // --- STREAMING_CHUNK: Snakes & Ladders Map & Question Bank Setup ---
+        const snakesAndLadders = {
+            // Ladders: bottom -> top
+            ladders: {
+                4: 14,
+                9: 31,
+                20: 38,
+                28: 84,
+                40: 59,
+                51: 67,
+                63: 81,
+                71: 91
+            },
+            // Snakes: head -> tail
+            snakes: {
+                17: 7,
+                54: 34,
+                62: 19,
+                64: 60,
+                87: 24,
+                93: 73,
+                95: 75,
+                99: 78
+            }
+        };
+
+        const form1QuestionBank = [
+            // Chapter 1: Rational Numbers
+            {
+                id: 1,
+                category: 'numbers',
+                chapter: "Chapter 1: Rational Numbers",
+                question: "Calculate: -8 + (-3) × 4",
+                options: ["-20", "-44", "20", "-11"],
+                correct: 0,
+                explanation: "Follow BODMAS (multiplication first):<br>(-3) × 4 = -12.<br>Then: -8 + (-12) = <b>-20</b>."
+            },
+            {
+                id: 2,
+                category: 'numbers',
+                chapter: "Chapter 1: Rational Numbers",
+                question: "Which sequence shows integers arranged in ascending order?",
+                options: ["-5, -2, 0, 3, 4", "4, 3, 0, -2, -5", "-2, -5, 0, 3, 4", "0, -2, -5, 3, 4"],
+                correct: 0,
+                explanation: "Ascending order goes from smallest (most negative) to largest: <b>-5, -2, 0, 3, 4</b>."
+            },
+            {
+                id: 3,
+                category: 'numbers',
+                chapter: "Chapter 1: Rational Numbers",
+                question: "Calculate: (-12) + (-15) ÷ 3",
+                options: ["-17", "-9", "-27", "9"],
+                correct: 0,
+                explanation: "Follow BODMAS (division first):<br>(-15) ÷ 3 = -5.<br>Then: (-12) + (-5) = <b>-17</b>."
+            },
+            {
+                id: 4,
+                category: 'numbers',
+                chapter: "Chapter 1: Rational Numbers",
+                question: "Evaluate: 3.5 - (-2.1) × 2",
+                options: ["7.7", "2.8", "-0.7", "11.2"],
+                correct: 0,
+                explanation: "Multiplication first: (-2.1) × 2 = -4.2.<br>3.5 - (-4.2) = 3.5 + 4.2 = <b>7.7</b>."
+            },
+            {
+                id: 5,
+                category: 'numbers',
+                chapter: "Chapter 1: Rational Numbers",
+                question: "Which of the following is an irrational number?",
+                options: ["π (Pi)", "0.75", "3/5", "-4"],
+                correct: 0,
+                explanation: "Rational numbers can be written as fractions p/q. <b>π (Pi)</b> cannot be written as an exact fraction, making it irrational."
+            },
+
+            // Chapter 2: Factors & Multiples
+            {
+                id: 6,
+                category: 'numbers',
+                chapter: "Chapter 2: Factors & Multiples",
+                question: "Find the Highest Common Factor (HCF) of 12 and 18.",
+                options: ["6", "36", "3", "2"],
+                correct: 0,
+                explanation: "Factors of 12: 1, 2, 3, 4, 6, 12.<br>Factors of 18: 1, 2, 3, 6, 9, 18.<br>Highest Common Factor (HCF) = <b>6</b>."
+            },
+            {
+                id: 7,
+                category: 'numbers',
+                chapter: "Chapter 2: Factors & Multiples",
+                question: "Find the Lowest Common Multiple (LCM) of 4 and 6.",
+                options: ["12", "24", "2", "18"],
+                correct: 0,
+                explanation: "Multiples of 4: 4, 8, 12, 16...<br>Multiples of 6: 6, 12, 18...<br>Lowest Common Multiple (LCM) = <b>12</b>."
+            },
+            {
+                id: 8,
+                category: 'numbers',
+                chapter: "Chapter 2: Factors & Multiples",
+                question: "Express 60 as a product of its prime factors.",
+                options: ["2² × 3 × 5", "2 × 3 × 10", "4 × 3 × 5", "2³ × 5"],
+                correct: 0,
+                explanation: "Prime factorization of 60 = 2 × 2 × 3 × 5 = <b>2² × 3 × 5</b>."
+            },
+            {
+                id: 9,
+                category: 'numbers',
+                chapter: "Chapter 2: Factors & Multiples",
+                question: "Three bells ring at intervals of 4, 6, and 8 minutes. When will they ring together again?",
+                options: ["24 minutes", "12 minutes", "48 minutes", "16 minutes"],
+                correct: 0,
+                explanation: "Find the LCM of 4, 6, and 8.<br>Multiples of 8: 8, 16, 24... 24 is divisible by 4 and 6.<br>LCM = <b>24 minutes</b>."
+            },
+            {
+                id: 10,
+                category: 'numbers',
+                chapter: "Chapter 2: Factors & Multiples",
+                question: "Find the Highest Common Factor (HCF) of 24, 36, and 48.",
+                options: ["12", "6", "24", "144"],
+                correct: 0,
+                explanation: "Factors common to all three: 1, 2, 3, 4, 6, 12.<br>The highest common factor is <b>12</b>."
+            },
+
+            // Chapter 3: Squares & Cubes
+            {
+                id: 11,
+                category: 'numbers',
+                chapter: "Chapter 3: Squares & Cubes",
+                question: "Calculate the value of: √144 + 3³",
+                options: ["39", "21", "33", "147"],
+                correct: 0,
+                explanation: "√144 = 12.<br>3³ = 3 × 3 × 3 = 27.<br>12 + 27 = <b>39</b>."
+            },
+            {
+                id: 12,
+                category: 'numbers',
+                chapter: "Chapter 3: Squares & Cubes",
+                question: "Evaluate: √(1.44) + ∛(0.008)",
+                options: ["1.4", "1.22", "1.02", "2.0"],
+                correct: 0,
+                explanation: "√(1.44) = 1.2.<br>∛(0.008) = 0.2.<br>1.2 + 0.2 = <b>1.4</b>."
+            },
+            {
+                id: 13,
+                category: 'numbers',
+                chapter: "Chapter 3: Squares & Cubes",
+                question: "Find the value of (-4)³.",
+                options: ["-64", "64", "-12", "16"],
+                correct: 0,
+                explanation: "(-4) × (-4) × (-4) = 16 × (-4) = <b>-64</b>."
+            },
+
+            // Chapter 4: Ratios, Rates & Proportions
+            {
+                id: 14,
+                category: 'numbers',
+                chapter: "Chapter 4: Ratios, Rates & Proportions",
+                question: "The ratio of Ali's age to Muthu's age is 2 : 3. If Muthu is 15 years old, how old is Ali?",
+                options: ["10 years old", "8 years old", "12 years old", "6 years old"],
+                correct: 0,
+                explanation: "Muthu: 3 parts = 15 years → 1 part = 5 years.<br>Ali: 2 parts = 2 × 5 = <b>10 years old</b>."
+            },
+            {
+                id: 15,
+                category: 'numbers',
+                chapter: "Chapter 4: Ratios, Rates & Proportions",
+                question: "If p : q = 3 : 4 and q : r = 8 : 9, find the ratio of p : q : r in simplest form.",
+                options: ["6 : 8 : 9", "3 : 4 : 9", "3 : 8 : 9", "6 : 4 : 9"],
+                correct: 0,
+                explanation: "Equate q in both ratios:<br>p : q = 6 : 8 (multiply by 2)<br>q : r = 8 : 9<br>So, p : q : r = <b>6 : 8 : 9</b>."
+            },
+            {
+                id: 16,
+                category: 'numbers',
+                chapter: "Chapter 4: Ratios, Rates & Proportions",
+                question: "A car travels 240 km in 3 hours. What is its average speed in km/h?",
+                options: ["80 km/h", "70 km/h", "90 km/h", "60 km/h"],
+                correct: 0,
+                explanation: "Speed = Distance ÷ Time = 240 km ÷ 3 h = <b>80 km/h</b>."
+            },
+
+            // Chapter 5: Algebraic Expressions
+            {
+                id: 17,
+                category: 'algebra',
+                chapter: "Chapter 5: Algebraic Expressions",
+                question: "Simplify the expression: 3x + 5y - x + 2y",
+                options: ["2x + 7y", "4x + 7y", "2x + 3y", "5x + 7y"],
+                correct: 0,
+                explanation: "Combine like terms:<br>(3x - x) + (5y + 2y) = <b>2x + 7y</b>."
+            },
+            {
+                id: 18,
+                category: 'algebra',
+                chapter: "Chapter 5: Algebraic Expressions",
+                question: "Simplify: (4x - 3y) - (2x - 5y)",
+                options: ["2x + 2y", "2x - 8y", "6x - 8y", "2x - 2y"],
+                correct: 0,
+                explanation: "Expand brackets: 4x - 3y - 2x + 5y.<br>Group like terms: (4x - 2x) + (-3y + 5y) = <b>2x + 2y</b>."
+            },
+            {
+                id: 19,
+                category: 'algebra',
+                chapter: "Chapter 5: Algebraic Expressions",
+                question: "If a = 3 and b = -2, calculate the value of 2a² - 3b.",
+                options: ["24", "12", "18", "30"],
+                correct: 0,
+                explanation: "Substitute values:<br>2(3)² - 3(-2) = 2(9) + 6 = 18 + 6 = <b>24</b>."
+            },
+
+            // Chapter 6: Linear Equations
+            {
+                id: 20,
+                category: 'algebra',
+                chapter: "Chapter 6: Linear Equations",
+                question: "Solve the equation: 2x + 5 = 13",
+                options: ["x = 4", "x = 9", "x = 3", "x = 8"],
+                correct: 0,
+                explanation: "2x = 13 - 5<br>2x = 8 → x = 8 ÷ 2 → <b>x = 4</b>."
+            },
+            {
+                id: 21,
+                category: 'algebra',
+                chapter: "Chapter 6: Linear Equations",
+                question: "Solve for x: (x + 4) / 3 = 5",
+                options: ["x = 11", "x = 19", "x = 15", "x = 7"],
+                correct: 0,
+                explanation: "Multiply both sides by 3: x + 4 = 15.<br>Subtract 4: x = 15 - 4 → <b>x = 11</b>."
+            },
+            {
+                id: 22,
+                category: 'algebra',
+                chapter: "Chapter 6: Linear Equations",
+                question: "The sum of three consecutive integers is 45. Find the largest integer.",
+                options: ["16", "15", "14", "17"],
+                correct: 0,
+                explanation: "Let integers be x, x+1, x+2.<br>3x + 3 = 45 → 3x = 42 → x = 14.<br>Largest integer = 14 + 2 = <b>16</b>."
+            },
+
+            // Chapter 7: Linear Inequalities
+            {
+                id: 23,
+                category: 'algebra',
+                chapter: "Chapter 7: Linear Inequalities",
+                question: "If 3x > 12, what is the set of possible integer values for x?",
+                options: ["x > 4", "x < 4", "x ≥ 4", "x ≤ 4"],
+                correct: 0,
+                explanation: "Divide both sides by 3:<br>3x / 3 > 12 / 3 → <b>x > 4</b>."
+            },
+            {
+                id: 24,
+                category: 'algebra',
+                chapter: "Chapter 7: Linear Inequalities",
+                question: "Solve the inequality: 5 - 2x ≤ 1",
+                options: ["x ≥ 2", "x ≤ 2", "x ≥ -2", "x ≤ -2"],
+                correct: 0,
+                explanation: "-2x ≤ 1 - 5 → -2x ≤ -4.<br>Divide by -2 (reverse inequality sign!): <b>x ≥ 2</b>."
+            },
+            {
+                id: 25,
+                category: 'algebra',
+                chapter: "Chapter 7: Linear Inequalities",
+                question: "Which integer is the smallest possible solution for x where x > -3.5?",
+                options: ["-3", "-4", "-2", "0"],
+                correct: 0,
+                explanation: "Integers greater than -3.5 are -3, -2, -1, 0...<br>The smallest integer is <b>-3</b>."
+            },
+
+            // Chapter 8: Lines and Angles
+            {
+                id: 26,
+                category: 'geometry',
+                chapter: "Chapter 8: Lines and Angles",
+                question: "Two adjacent angles on a straight line always sum up to...",
+                options: ["180°", "360°", "90°", "270°"],
+                correct: 0,
+                explanation: "Angles on a straight line add up to <b>180°</b>."
+            },
+            {
+                id: 27,
+                category: 'geometry',
+                chapter: "Chapter 8: Lines and Angles",
+                question: "Two angles are complementary. If one angle is 38°, find the measure of the other angle.",
+                options: ["52°", "142°", "62°", "38°"],
+                correct: 0,
+                explanation: "Complementary angles sum up to 90°.<br>90° - 38° = <b>52°</b>."
+            },
+            {
+                id: 28,
+                category: 'geometry',
+                chapter: "Chapter 8: Lines and Angles",
+                question: "In a pair of parallel lines cut by a transversal line, corresponding angles are...",
+                options: ["Equal to each other", "Supplementary (add to 180°)", "Complementary (add to 90°)", "Always acute"],
+                correct: 0,
+                explanation: "Corresponding angles ('F' shape) formed by parallel lines and a transversal are always <b>equal to each other</b>."
+            },
+
+            // Chapter 9: Basic Polygons
+            {
+                id: 29,
+                category: 'geometry',
+                chapter: "Chapter 9: Basic Polygons",
+                question: "Find the sum of interior angles of a triangle.",
+                options: ["180°", "360°", "270°", "540°"],
+                correct: 0,
+                explanation: "The interior angles of any triangle always sum up to <b>180°</b>."
+            },
+            {
+                id: 30,
+                category: 'geometry',
+                chapter: "Chapter 9: Basic Polygons",
+                question: "Find the value of x in an isosceles triangle with angles x, x, and 40°.",
+                options: ["70°", "80°", "100°", "140°"],
+                correct: 0,
+                explanation: "Sum of angles in triangle = 180°.<br>x + x + 40° = 180° → 2x = 140° → <b>x = 70°</b>."
+            },
+            {
+                id: 31,
+                category: 'geometry',
+                chapter: "Chapter 9: Basic Polygons",
+                question: "What is the sum of interior angles of a quadrilateral?",
+                options: ["360°", "180°", "540°", "270°"],
+                correct: 0,
+                explanation: "A quadrilateral can be split into 2 triangles.<br>Sum of interior angles = 2 × 180° = <b>360°</b>."
+            },
+
+            // Chapter 10: Perimeter and Area
+            {
+                id: 32,
+                category: 'geometry',
+                chapter: "Chapter 10: Perimeter and Area",
+                question: "Find the area of a triangle with a base of 8 cm and a height of 6 cm.",
+                options: ["24 cm²", "48 cm²", "14 cm²", "28 cm²"],
+                correct: 0,
+                explanation: "Area = ½ × base × height<br>= ½ × 8 cm × 6 cm = <b>24 cm²</b>."
+            },
+            {
+                id: 33,
+                category: 'geometry',
+                chapter: "Chapter 10: Perimeter and Area",
+                question: "Calculate the area of a trapezium with parallel sides 6 cm and 10 cm, and height 5 cm.",
+                options: ["40 cm²", "80 cm²", "30 cm²", "50 cm²"],
+                correct: 0,
+                explanation: "Area of trapezium = ½ × (a + b) × h<br>= ½ × (6 + 10) × 5 = ½ × 16 × 5 = <b>40 cm²</b>."
+            },
+            {
+                id: 34,
+                category: 'geometry',
+                chapter: "Chapter 10: Perimeter and Area",
+                question: "A square has a perimeter of 36 cm. What is its area?",
+                options: ["81 cm²", "36 cm²", "144 cm²", "72 cm²"],
+                correct: 0,
+                explanation: "Side length = 36 cm ÷ 4 = 9 cm.<br>Area = 9 cm × 9 cm = <b>81 cm²</b>."
+            },
+
+            // Chapter 11: Introduction to Set
+            {
+                id: 35,
+                category: 'geometry',
+                chapter: "Chapter 11: Introduction to Set",
+                question: "Given Set P = {2, 3, 5, 7, 11}. What is n(P), the number of elements in Set P?",
+                options: ["5", "11", "4", "6"],
+                correct: 0,
+                explanation: "Set P contains 5 prime elements: 2, 3, 5, 7, and 11.<br>Therefore, n(P) = <b>5</b>."
+            },
+            {
+                id: 36,
+                category: 'geometry',
+                chapter: "Chapter 11: Introduction to Set",
+                question: "If Universal Set ξ = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10} and Set A = {even numbers}, find A' (complement of A).",
+                options: ["{1, 3, 5, 7, 9}", "{2, 4, 6, 8, 10}", "{1, 2, 3, 4, 5}", "{3, 5, 7, 9}"],
+                correct: 0,
+                explanation: "A = {2, 4, 6, 8, 10}.<br>Complement A' contains all elements in ξ NOT in A: <b>{1, 3, 5, 7, 9}</b>."
+            },
+
+            // Chapter 12: Basic Data Handling
+            {
+                id: 37,
+                category: 'geometry',
+                chapter: "Chapter 12: Basic Data Handling",
+                question: "In a pie chart representing 60 students, a sector angle of 90° represents how many students?",
+                options: ["15 students", "20 students", "30 students", "45 students"],
+                correct: 0,
+                explanation: "Fraction of circle = 90° / 360° = ¼.<br>Number of students = ¼ × 60 = <b>15 students</b>."
+            },
+            {
+                id: 38,
+                category: 'geometry',
+                chapter: "Chapter 12: Basic Data Handling",
+                question: "What is the median of the data set: 3, 7, 2, 9, 5?",
+                options: ["5", "3", "7", "5.2"],
+                correct: 0,
+                explanation: "Arrange in ascending order: 2, 3, <b>5</b>, 7, 9.<br>The middle number (median) is <b>5</b>."
+            },
+
+            // Chapter 13: Pythagoras' Theorem
+            {
+                id: 39,
+                category: 'geometry',
+                chapter: "Chapter 13: Pythagoras' Theorem",
+                question: "In a right-angled triangle, the two perpendicular sides are 3 cm and 4 cm. Find the hypotenuse.",
+                options: ["5 cm", "7 cm", "25 cm", "6 cm"],
+                correct: 0,
+                explanation: "Pythagoras' Theorem: c² = a² + b²<br>c² = 3² + 4² = 9 + 16 = 25<br>c = √25 = <b>5 cm</b>."
+            },
+            {
+                id: 40,
+                category: 'geometry',
+                chapter: "Chapter 13: Pythagoras' Theorem",
+                question: "A right-angled triangle has a hypotenuse of 13 cm and one side of 12 cm. Find the length of the third side.",
+                options: ["5 cm", "1 cm", "7 cm", "25 cm"],
+                correct: 0,
+                explanation: "a² + b² = c² → b² = 13² - 12² = 169 - 144 = 25.<br>b = √25 = <b>5 cm</b>."
+            },
+            {
+                id: 41,
+                category: 'geometry',
+                chapter: "Chapter 13: Pythagoras' Theorem",
+                question: "Which set of side lengths forms a right-angled triangle?",
+                options: ["6 cm, 8 cm, 10 cm", "4 cm, 5 cm, 6 cm", "5 cm, 10 cm, 12 cm", "3 cm, 4 cm, 6 cm"],
+                correct: 0,
+                explanation: "Check: 6² + 8² = 36 + 64 = 100 = 10².<br>This satisfies Pythagoras' Theorem, so <b>6 cm, 8 cm, 10 cm</b> forms a right-angled triangle."
+            }
+        ];
+
+        // --- STREAMING_CHUNK: Game State Variables & Repetition Tracker ---
+        let totalTeams = 4;
+        let teams = [];
+        let currentTurnIndex = 0;
+        let isRolling = false;
+        let currentSyllabusCategory = 'all';
+        let usedQuestionIds = new Set(); // Tracks asked questions to guarantee NO repetition
+
+        const teamConfigs = [
+            { name: "Red Team", color: "#ef4444", tokenClass: "token-red", textClass: "text-rose-400", dotClass: "bg-rose-500" },
+            { name: "Blue Team", color: "#3b82f6", tokenClass: "token-blue", textClass: "text-blue-400", dotClass: "bg-blue-500" },
+            { name: "Green Team", color: "#10b981", tokenClass: "token-green", textClass: "text-emerald-400", dotClass: "bg-emerald-500" },
+            { name: "Yellow Team", color: "#f59e0b", tokenClass: "token-yellow", textClass: "text-amber-400", dotClass: "bg-amber-500" }
+        ];
+
+        let pendingMove = {
+            teamIndex: 0,
+            targetTile: 1,
+            moveType: 'standard' // 'ladder', 'snake', 'standard'
+        };
+
+        // --- STREAMING_CHUNK: Setup Functions & UI Rendering ---
+        function setPlayerCount(count) {
+            playSound('dice');
+            totalTeams = count;
+            document.querySelectorAll('.player-cnt-btn').forEach((btn, idx) => {
+                if (idx + 1 === count) {
+                    btn.className = "player-cnt-btn flex-1 py-2.5 rounded-xl font-bold text-sm bg-purple-600 border-2 border-purple-400 text-white shadow-lg";
+                } else {
+                    btn.className = "player-cnt-btn flex-1 py-2.5 rounded-xl font-bold text-sm bg-slate-800 border-2 border-slate-700 text-slate-300";
+                }
+            });
+        }
+
+        function startGame(category) {
+            playSound('dice');
+            currentSyllabusCategory = category;
+            usedQuestionIds.clear(); // Reset asked questions tracker for a fresh game
+
+            // Initialize teams
+            teams = [];
+            for (let i = 0; i < totalTeams; i++) {
+                teams.push({
+                    id: i,
+                    name: teamConfigs[i].name,
+                    config: teamConfigs[i],
+                    position: 1
+                });
+            }
+
+            currentTurnIndex = 0;
+
+            // Hide Lobby & Show Board
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('gameplayScreen').classList.remove('hidden');
+
+            renderBoardTiles();
+            renderLeaderboard();
+            updateTurnBanner();
+            updateAllTokenPositions();
+
+            // Initial log
+            logMatch(`${teams[0].name} rolls first! Good luck!`);
+        }
+
+        function renderBoardTiles() {
+            const grid = document.getElementById('boardGrid');
+            grid.innerHTML = '<svg id="boardSvg" class="absolute inset-0 w-full h-full pointer-events-none z-10"></svg>';
+
+            // Generate tiles 100 down to 1 in boustrophedon pattern
+            for (let row = 9; row >= 0; row--) {
+                const isEvenRow = (row % 2 === 0);
+                for (let col = 0; col < 10; col++) {
+                    const colIndex = isEvenRow ? col : (9 - col);
+                    const tileNum = (row * 10) + colIndex + 1;
+
+                    const tileEl = document.createElement('div');
+                    tileEl.id = `tile-${tileNum}`;
+                    tileEl.className = `tile border border-slate-800/60 ${ (row + col) % 2 === 0 ? 'bg-slate-900/80' : 'bg-slate-800/80' }`;
+
+                    // Highlight special tiles
+                    if (snakesAndLadders.ladders[tileNum]) {
+                        tileEl.classList.add('bg-emerald-950/40', 'border-emerald-500/40');
+                        tileEl.innerHTML = `<span class="z-0 text-slate-400">${tileNum}</span><i class="fa-solid fa-stairs text-emerald-400 text-[10px] absolute top-1 right-1"></i>`;
+                    } else if (snakesAndLadders.snakes[tileNum]) {
+                        tileEl.classList.add('bg-rose-950/40', 'border-rose-500/40');
+                        tileEl.innerHTML = `<span class="z-0 text-slate-400">${tileNum}</span><i class="fa-solid fa-staff-snake text-rose-500 text-[10px] absolute top-1 right-1"></i>`;
+                    } else if (tileNum === 100) {
+                        tileEl.classList.add('bg-amber-500/20', 'border-amber-400');
+                        tileEl.innerHTML = `<span class="z-0 text-amber-300 font-black">100</span><i class="fa-solid fa-crown text-amber-400 text-xs absolute top-1 right-1"></i>`;
+                    } else {
+                        tileEl.innerHTML = `<span class="z-0 text-slate-400">${tileNum}</span>`;
+                    }
+
+                    grid.appendChild(tileEl);
+                }
+            }
+
+            // Draw connecting SVG lines for snakes & ladders after DOM layout
+            setTimeout(drawSvgConnections, 100);
+        }
+
+        function drawSvgConnections() {
+            const svg = document.getElementById('boardSvg');
+            if (!svg) return;
+            svg.innerHTML = '';
+
+            const getTileCenter = (tileNum) => {
+                const el = document.getElementById(`tile-${tileNum}`);
+                if (!el) return { x: 0, y: 0 };
+                const gridRect = document.getElementById('boardGrid').getBoundingClientRect();
+                const tileRect = el.getBoundingClientRect();
+                return {
+                    x: tileRect.left + tileRect.width / 2 - gridRect.left,
+                    y: tileRect.top + tileRect.height / 2 - gridRect.top
+                };
+            };
+
+            // Draw Ladders
+            Object.entries(snakesAndLadders.ladders).forEach(([bottom, top]) => {
+                const start = getTileCenter(bottom);
+                const end = getTileCenter(top);
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', start.x);
+                line.setAttribute('y1', start.y);
+                line.setAttribute('x2', end.x);
+                line.setAttribute('y2', end.y);
+                line.setAttribute('class', 'ladder-line');
+                svg.appendChild(line);
+            });
+
+            // Draw Snakes
+            Object.entries(snakesAndLadders.snakes).forEach(([head, tail]) => {
+                const start = getTileCenter(head);
+                const end = getTileCenter(tail);
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', start.x);
+                line.setAttribute('y1', start.y);
+                line.setAttribute('x2', end.x);
+                line.setAttribute('y2', end.y);
+                line.setAttribute('class', 'snake-line');
+                svg.appendChild(line);
+            });
+        }
+
+        window.addEventListener('resize', drawSvgConnections);
+
+        // --- STREAMING_CHUNK: Token Placement & Gameplay Engine ---
+        function updateAllTokenPositions() {
+            // Remove existing token elements
+            document.querySelectorAll('.token').forEach(el => el.remove());
+
+            teams.forEach((team) => {
+                const tileEl = document.getElementById(`tile-${team.position}`);
+                if (tileEl) {
+                    const token = document.createElement('div');
+                    token.id = `token-${team.id}`;
+                    token.className = `token ${team.config.tokenClass}`;
+                    token.innerText = team.name.charAt(0);
+                    
+                    // Offset multiple tokens on same tile
+                    const offset = (team.id * 5) - 8;
+                    token.style.transform = `translate(${offset}px, ${offset}px)`;
+
+                    tileEl.appendChild(token);
+                }
+            });
+        }
+
+        function updateTurnBanner() {
+            const team = teams[currentTurnIndex];
+            const bannerText = document.getElementById('currentTurnText');
+            const dot = document.getElementById('turnColorDot');
+
+            bannerText.className = `title-font text-xl md:text-2xl font-bold ${team.config.textClass} flex items-center gap-2`;
+            dot.className = `w-4 h-4 rounded-full ${team.config.dotClass} inline-block shadow`;
+            bannerText.querySelector('span:last-child').innerText = team.name;
+        }
+
+        function renderLeaderboard() {
+            const container = document.getElementById('leaderboardList');
+            container.innerHTML = '';
+
+            // Sort teams by board position descending
+            const sortedTeams = [...teams].sort((a, b) => b.position - a.position);
+
+            sortedTeams.forEach((t, idx) => {
+                const card = document.createElement('div');
+                card.className = `p-2.5 rounded-xl border flex items-center justify-between ${ t.id === currentTurnIndex ? 'bg-purple-900/40 border-purple-500' : 'bg-slate-900/40 border-slate-800' }`;
+                card.innerHTML = `
+                    <div class="flex items-center space-x-2.5">
+                        <span class="text-xs font-bold text-slate-500">#${idx + 1}</span>
+                        <div class="w-3.5 h-3.5 rounded-full ${t.config.dotClass}"></div>
+                        <span class="font-bold text-xs ${t.config.textClass}">${t.name}</span>
+                    </div>
+                    <span class="text-xs font-black text-amber-300 bg-slate-800 px-2.5 py-1 rounded-lg">Tile ${t.position}</span>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function logMatch(msg) {
+            document.getElementById('matchLogText').innerHTML = msg;
+        }
+
+        // --- STREAMING_CHUNK: Dice Rolling & Question Challenge Logic ---
+        function rollDice() {
+            if (isRolling) return;
+            isRolling = true;
+
+            const rollBtn = document.getElementById('rollDiceBtn');
+            const diceIcon = document.getElementById('diceIcon');
+            const diceResultText = document.getElementById('diceResultText');
+
+            rollBtn.disabled = true;
+            diceIcon.classList.add('animate-dice');
+            playSound('dice');
+
+            let rollsCount = 0;
+            const diceInterval = setInterval(() => {
+                const tempVal = Math.floor(Math.random() * 6) + 1;
+                diceIcon.className = `fa-solid fa-dice-${getDiceIconName(tempVal)} text-2xl animate-dice`;
+                rollsCount++;
+
+                if (rollsCount >= 10) {
+                    clearInterval(diceInterval);
+                    const diceVal = Math.floor(Math.random() * 6) + 1;
+                    diceIcon.className = `fa-solid fa-dice-${getDiceIconName(diceVal)} text-2xl`;
+                    diceIcon.classList.remove('animate-dice');
+
+                    diceResultText.innerText = `Rolled a ${diceVal}!`;
+                    processTurn(diceVal);
+                }
+            }, 60);
+        }
+
+        function getDiceIconName(val) {
+            const names = ['one', 'two', 'three', 'four', 'five', 'six'];
+            return names[val - 1];
+        }
+
+        function processTurn(diceRoll) {
+            const currentTeam = teams[currentTurnIndex];
+            let rawTarget = currentTeam.position + diceRoll;
+
+            // Cap at 100
+            if (rawTarget > 100) {
+                rawTarget = 100;
+            }
+
+            // Check tile landing conditions
+            let moveType = 'standard';
+            if (snakesAndLadders.ladders[rawTarget]) {
+                moveType = 'ladder';
+            } else if (snakesAndLadders.snakes[rawTarget]) {
+                moveType = 'snake';
+            }
+
+            pendingMove = {
+                teamIndex: currentTurnIndex,
+                targetTile: rawTarget,
+                moveType: moveType
+            };
+
+            // Move token visually first to target tile
+            currentTeam.position = rawTarget;
+            updateAllTokenPositions();
+            renderLeaderboard();
+
+            // Trigger Math Challenge after small delay
+            setTimeout(() => {
+                triggerMathChallenge(rawTarget, moveType);
+            }, 500);
+        }
+
+        function triggerMathChallenge(tileNum, moveType) {
+            // Filter questions based on selected syllabus category
+            let availableQuestions = form1QuestionBank;
+            if (currentSyllabusCategory !== 'all') {
+                availableQuestions = form1QuestionBank.filter(q => q.category === currentSyllabusCategory);
+            }
+            if (availableQuestions.length === 0) availableQuestions = form1QuestionBank;
+
+            // Filter out questions already used in this game session
+            let unusedQuestions = availableQuestions.filter(q => !usedQuestionIds.has(q.id));
+
+            // If all questions in the chosen syllabus mode have been used, auto-reset history for continuous play
+            if (unusedQuestions.length === 0) {
+                availableQuestions.forEach(q => usedQuestionIds.delete(q.id));
+                unusedQuestions = [...availableQuestions];
+            }
+
+            // Pick random question from unused pool
+            const q = unusedQuestions[Math.floor(Math.random() * unusedQuestions.length)];
+            usedQuestionIds.add(q.id);
+
+            // Setup Modal UI
+            document.getElementById('modalTileBadge').innerText = `Tile #${tileNum} Challenge`;
+            document.getElementById('modalCategoryBadge').innerText = q.chapter;
+
+            const contextBanner = document.getElementById('modalContextBanner');
+            const contextText = document.getElementById('modalContextText');
+
+            if (moveType === 'ladder') {
+                contextBanner.className = "p-3 rounded-xl bg-emerald-900/50 border border-emerald-500/30 text-emerald-200 text-xs font-semibold flex items-center gap-2";
+                contextText.innerText = `LADDER FOUND! Answer correctly to climb from Tile ${tileNum} up to Tile ${snakesAndLadders.ladders[tileNum]}!`;
+            } else if (moveType === 'snake') {
+                contextBanner.className = "p-3 rounded-xl bg-rose-900/50 border border-rose-500/30 text-rose-200 text-xs font-semibold flex items-center gap-2";
+                contextText.innerText = `SNAKE HEAD! Answer correctly to DODGE sliding down to Tile ${snakesAndLadders.snakes[tileNum]}!`;
+            } else {
+                contextBanner.className = "p-3 rounded-xl bg-indigo-900/50 border border-indigo-500/30 text-indigo-200 text-xs font-semibold flex items-center gap-2";
+                contextText.innerText = `Standard Challenge! Answer correctly to secure your position on Tile ${tileNum}.`;
+            }
+
+            document.getElementById('modalQuestionText').innerText = q.question;
+            document.getElementById('modalExplanationBox').classList.add('hidden');
+
+            // Render Options
+            const optionsGrid = document.getElementById('modalOptionsGrid');
+            optionsGrid.innerHTML = '';
+
+            const indexedOptions = q.options.map((opt, i) => ({ text: opt, idx: i }));
+            const shuffled = [...indexedOptions].sort(() => Math.random() - 0.5);
+
+            shuffled.forEach((optObj, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "modal-option-btn btn-bounce p-3.5 rounded-2xl bg-slate-800 hover:bg-purple-900/50 border border-slate-700 text-left text-xs md:text-sm font-semibold text-slate-100 flex items-center justify-between";
+                btn.innerHTML = `
+                    <span><span class="inline-block w-6 h-6 rounded-lg bg-slate-700 text-amber-300 font-bold text-center leading-6 mr-2 text-xs">${String.fromCharCode(65 + idx)}</span>${optObj.text}</span>
+                    <i class="fa-regular fa-circle text-slate-500"></i>
+                `;
+                btn.onclick = () => handleModalAnswer(optObj.idx, q, btn);
+                optionsGrid.appendChild(btn);
+            });
+
+            // Display Modal
+            document.getElementById('mathModal').classList.remove('hidden');
+        }
+
+        function handleModalAnswer(selectedIndex, questionObj, selectedBtn) {
+            const allBtns = document.querySelectorAll('.modal-option-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            const isCorrect = (selectedIndex === questionObj.correct);
+            const team = teams[pendingMove.teamIndex];
+
+            if (isCorrect) {
+                playSound('correct');
+                selectedBtn.classList.add('bg-emerald-600/30', 'border-emerald-500', 'text-emerald-200');
+                selectedBtn.querySelector('i').className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+
+                if (pendingMove.moveType === 'ladder') {
+                    const topTile = snakesAndLadders.ladders[pendingMove.targetTile];
+                    setTimeout(() => playSound('ladder'), 300);
+                    team.position = topTile;
+                    logMatch(`🌟 <b>Correct!</b> ${team.name} answered correctly and climbed the ladder to <b>Tile ${topTile}</b>!`);
+                } else if (pendingMove.moveType === 'snake') {
+                    logMatch(`🛡️ <b>Correct!</b> ${team.name} answered correctly and <b>dodged the snake</b>! Stays on Tile ${team.position}.`);
+                } else {
+                    logMatch(`✅ <b>Correct!</b> ${team.name} answered correctly and holds position at <b>Tile ${team.position}</b>.`);
+                }
+
+            } else {
+                playSound('wrong');
+                selectedBtn.classList.add('bg-rose-600/30', 'border-rose-500', 'text-rose-200');
+                selectedBtn.querySelector('i').className = 'fa-solid fa-circle-xmark text-rose-400 text-lg';
+
+                // Highlight correct button
+                allBtns.forEach(btn => {
+                    if (btn.innerText.includes(questionObj.options[questionObj.correct])) {
+                        btn.classList.add('bg-emerald-600/20', 'border-emerald-500/50');
+                    }
+                });
+
+                if (pendingMove.moveType === 'snake') {
+                    const tailTile = snakesAndLadders.snakes[pendingMove.targetTile];
+                    setTimeout(() => playSound('snake'), 300);
+                    team.position = tailTile;
+                    logMatch(`🐍 <b>Incorrect!</b> ${team.name} failed the question and slid down the snake to <b>Tile ${tailTile}</b>.`);
+                } else if (pendingMove.moveType === 'ladder') {
+                    logMatch(`❌ <b>Incorrect!</b> ${team.name} missed the question and could not climb the ladder. Stays on Tile ${team.position}.`);
+                } else {
+                    // Step back 2 spaces as minor penalty
+                    team.position = Math.max(1, team.position - 2);
+                    logMatch(`❌ <b>Incorrect!</b> ${team.name} steps back 2 spaces to <b>Tile ${team.position}</b>.`);
+                }
+            }
+
+            updateAllTokenPositions();
+            renderLeaderboard();
+
+            // Show explanation
+            document.getElementById('modalExplanationText').innerHTML = questionObj.explanation;
+            document.getElementById('modalExplanationBox').classList.remove('hidden');
+        }
+
+        function closeMathModal() {
+            playSound('dice');
+            document.getElementById('mathModal').classList.add('hidden');
+
+            const currentTeam = teams[currentTurnIndex];
+
+            // Check Victory condition (reached 100)
+            if (currentTeam.position >= 100) {
+                endGame(currentTeam);
+            } else {
+                // Next Team's turn
+                currentTurnIndex = (currentTurnIndex + 1) % teams.length;
+                updateTurnBanner();
+                renderLeaderboard();
+
+                // Reset dice button
+                isRolling = false;
+                document.getElementById('rollDiceBtn').disabled = false;
+                document.getElementById('diceResultText').innerText = '';
+            }
+        }
+
+        // --- STREAMING_CHUNK: End Game Victory & Reset Handlers ---
+        function endGame(winningTeam) {
+            document.getElementById('gameplayScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+
+            document.getElementById('winnerTitle').innerText = `${winningTeam.name} Wins!`;
+            document.getElementById('winnerSubtitle').innerText = `Outstanding job! ${winningTeam.name} reached Tile 100 and won the Form 1 Math Quest!`;
+
+            try {
+                confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            } catch(e){}
+        }
+
+        function restartGame() {
+            startGame(currentSyllabusCategory);
+        }
+
+        function returnToMenu() {
+            playSound('dice');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('gameplayScreen').classList.add('hidden');
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+        }
+
+        function showInstructions() {
+            playSound('dice');
+            document.getElementById('instructionsModal').classList.remove('hidden');
+        }
+
+        function hideInstructions() {
+            playSound('dice');
+            document.getElementById('instructionsModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
